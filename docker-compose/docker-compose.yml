@@ -6,14 +6,14 @@ services:
       file: ./services/docker-compose-redis.yml
       service: redis_db
 
-  db:
-    extends:
-      file: ./services/docker-compose-db.yml
-      service: db
+  # db:
+  #   extends:
+  #     file: ./services/docker-compose-db.yml
+  #     service: db
 
   blockscout:
     depends_on:
-      - db
+      # - db
       - smart-contract-verifier
       - redis_db
     image: blockscout/blockscout:${DOCKER_TAG:-latest}
@@ -32,13 +32,17 @@ services:
     restart: always
     stop_grace_period: 5m
     container_name: 'blockscout'
-    links:
-      - db:database
+    # links:
+    #   - db:database
     command: bash -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     env_file:
       - ./envs/common-blockscout.env
+    environment:
+      DATABASE_URL: postgresql://postgres:blockscout@10.148.0.35:5432/blockscout?ssl=false
+      ECTO_USE_SSL: 'false'
+      SECRET_KEY_BASE: '578HrBk08YBhCNU/eBfqYD8EzWZb90k22smKup3NoDgHrZhJ7LeihkOxzHaE4mvC'
     ports:
       - 4000:4000
     volumes:
